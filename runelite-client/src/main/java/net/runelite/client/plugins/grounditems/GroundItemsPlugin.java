@@ -36,6 +36,8 @@ import java.awt.Color;
 import java.awt.Rectangle;
 import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
+
+import java.io.File;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -56,6 +58,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.Value;
+import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
 import net.runelite.api.ItemComposition;
@@ -79,6 +82,8 @@ import net.runelite.api.events.MenuEntryAdded;
 import net.runelite.api.gameval.ItemID;
 import net.runelite.api.gameval.VarbitID;
 import net.runelite.client.Notifier;
+import net.runelite.client.RuneLite;
+import net.runelite.client.audio.AudioPlayer;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
@@ -104,6 +109,7 @@ import net.runelite.client.util.QuantityFormatter;
 import net.runelite.client.util.RSTimeUnit;
 import net.runelite.client.util.Text;
 
+@Slf4j
 @PluginDescriptor(
 	name = "Ground Items",
 	description = "Highlight ground items and/or show price information",
@@ -188,6 +194,9 @@ public class GroundItemsPlugin extends Plugin
 	@Inject
 	private ColorPickerManager colorPickerManager;
 
+	@Inject
+	private AudioPlayer audioPlayer;
+
 	@Getter
 	private final Table<WorldPoint, Integer, GroundItem> collectedGroundItems = HashBasedTable.create();
 	private List<PriceHighlight> priceChecks = ImmutableList.of();
@@ -270,6 +279,15 @@ public class GroundItemsPlugin extends Plugin
 	@Subscribe
 	public void onItemSpawned(ItemSpawned itemSpawned)
 	{
+		try
+		{
+			audioPlayer.play(new File(RuneLite.RUNELITE_DIR, "AlertSound6.mp3"), 0);
+		}
+		catch (Exception e)
+		{
+			log.warn("play audio", e);
+		}
+
 		TileItem item = itemSpawned.getItem();
 		Tile tile = itemSpawned.getTile();
 
